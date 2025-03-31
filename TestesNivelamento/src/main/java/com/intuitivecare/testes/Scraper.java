@@ -6,13 +6,19 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import org.apache.commons.io.FileUtils;
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class Scraper {
 
@@ -47,6 +53,15 @@ public class Scraper {
                     "Erro ao conectar na URL ou baixar os arquivos. Verifique a URL e a sua conexão com a internet.",
                     e);
         }
+        List<String> arquivosBaixados = Arrays.asList(
+        "TestesNivelamento/Anexo_I_Rol_2021RN_465.2021_RN627L.2024.pdf",
+        "TestesNivelamento/Anexo_II_DUT_2021_RN_465.2021_RN628.2025_RN629.2025.pdf"
+);
+
+System.out.println("Diretório atual: " + new File(".").getAbsolutePath());
+
+        // Chamando o método de compactação
+        compactarArquivos(arquivosBaixados, "TestesNivelamento/ArquivosCompactados.zip");
     }
 
     private static Document conectarUrl(String url) throws IOException {
@@ -91,5 +106,35 @@ public class Scraper {
         File destino = new File(caminhoDestino + fileName);
         FileOutputStream outputStream = new FileOutputStream(destino);
 
+    }
+
+    public static void compactarArquivos(List<String> arquivos, String nomeArquivoZip) {
+        try {
+            FileOutputStream fos = new FileOutputStream(nomeArquivoZip);
+            ZipOutputStream zipOut = new ZipOutputStream(fos);
+
+            for (String arquivo : arquivos) {
+                File fileToZip = new File(arquivo);
+                if (!fileToZip.exists()) {
+                    System.out.println("Arquivo não encontrado: " + arquivo);
+                    continue;
+                }
+                FileInputStream fis = new FileInputStream(fileToZip);
+                ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
+                zipOut.putNextEntry(zipEntry);
+
+                byte[] bytes = new byte[1024];
+                int length;
+                while ((length = fis.read(bytes)) >= 0) {
+                    zipOut.write(bytes, 0, length);
+                }
+                fis.close();
+            }
+            zipOut.close();
+            fos.close();
+            System.out.println("Compactação concluída com sucesso: " + nomeArquivoZip);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
