@@ -6,6 +6,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import org.apache.commons.io.FileUtils;
@@ -42,7 +43,9 @@ public class Scraper {
                 baixarArquivos(links);
             }
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Erro ao conectar na URL ou baixar os arquivos. Verifique a URL e a sua conexão com a internet.", e);
+            logger.log(Level.SEVERE,
+                    "Erro ao conectar na URL ou baixar os arquivos. Verifique a URL e a sua conexão com a internet.",
+                    e);
         }
     }
 
@@ -60,12 +63,12 @@ public class Scraper {
         for (Element link : links) {
             String fileUrl = link.absUrl("href");
             String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-    
+
             // Filtra os arquivos que você deseja baixar
             if (fileName.contains("Anexo_I") || fileName.contains("Anexo_II")) {
-    
+
                 logger.info("Iniciando download do arquivo: " + fileName);
-    
+
                 try {
                     downloadFile(fileUrl, fileName);
                     logger.info("Download concluído: " + fileName);
@@ -77,9 +80,16 @@ public class Scraper {
             }
         }
     }
-    
 
     private static void downloadFile(String fileUrl, String fileName) throws IOException {
-        FileUtils.copyURLToFile(new URL(fileUrl), new File(fileName));
+        String caminhoDestino = "TestesNivelamento/";
+        File diretorio = new File(caminhoDestino);
+        if (!diretorio.exists()) {
+            diretorio.mkdirs(); // Cria a pasta se não existir
+        }
+
+        File destino = new File(caminhoDestino + fileName);
+        FileOutputStream outputStream = new FileOutputStream(destino);
+
     }
 }
