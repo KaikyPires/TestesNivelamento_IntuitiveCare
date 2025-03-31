@@ -9,9 +9,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import org.apache.commons.io.FileUtils;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -40,96 +40,112 @@ public class Scraper {
 
         try {
             Document document = conectarUrl(url);
-            Elements links = extrairLinks(document);
-
-            if (links.isEmpty()) {
-                logger.warning("Nenhum link de PDF encontrado na URL fornecida.");
-            } else {
-                logger.info("Total de PDFs encontrados: " + links.size());
-                baixarArquivos(links);
-            }
+            baixarArquivos(document);
+            
+            // Compactar os arquivos baixados
+            compactarArquivos("TestesNivelamento/ArquivosCompactados.zip");
         } catch (IOException e) {
             logger.log(Level.SEVERE,
                     "Erro ao conectar na URL ou baixar os arquivos. Verifique a URL e a sua conexão com a internet.",
                     e);
         }
-        List<String> arquivosBaixados = Arrays.asList(
-        "TestesNivelamento/Anexo_I_Rol_2021RN_465.2021_RN627L.2024.pdf",
-        "TestesNivelamento/Anexo_II_DUT_2021_RN_465.2021_RN628.2025_RN629.2025.pdf"
-);
-
-System.out.println("Diretório atual: " + new File(".").getAbsolutePath());
-
-        // Chamando o método de compactação
-        compactarArquivos(arquivosBaixados, "TestesNivelamento/ArquivosCompactados.zip");
     }
 
-    private static Document conectarUrl(String url) throws IOException {
+    public static Document conectarUrl(String url) throws IOException {
         logger.info("Conectando na URL: " + url);
         return Jsoup.connect(url).get();
     }
 
-    private static Elements extrairLinks(Document document) {
-        logger.info("Extraindo links de arquivos PDF...");
-        return document.select("a[href$=.pdf]");
-    }
+    public static void baixarArquivos(Document document) {
+        List<String> arquivosDesejados = Arrays.asList(
+                "Anexo_I_Rol_2021RN_465.2021_RN627L.2024.pdf",
+                "Anexo_II_DUT_2021_RN_465.2021_RN628.2025_RN629.2025.pdf"
+        );
 
-    private static void baixarArquivos(Elements links) {
-        for (Element link : links) {
-            String fileUrl = link.absUrl("href");
-            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-
-            // Filtra os arquivos que você deseja baixar
-            if (fileName.contains("Anexo_I") || fileName.contains("Anexo_II")) {
-
-                logger.info("Iniciando download do arquivo: " + fileName);
-
-                try {
-                    downloadFile(fileUrl, fileName);
-                    logger.info("Download concluído: " + fileName);
-                } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Erro ao baixar o arquivo: " + fileName, e);
-                }
-            } else {
-                logger.info("Arquivo ignorado: " + fileName);
-            }
-        }
-    }
-
-    private static void downloadFile(String fileUrl, String fileName) throws IOException {
+        Elements links = document.select("a[href$=.pdf]");
         String caminhoDestino = "TestesNivelamento/";
         File diretorio = new File(caminhoDestino);
         if (!diretorio.exists()) {
             diretorio.mkdirs(); // Cria a pasta se não existir
         }
 
-        File destino = new File(caminhoDestino + fileName);
-        FileOutputStream outputStream = new FileOutputStream(destino);
+        for (Element link : links) {
+            String urlArquivo = link.absUrl("href");
+            String nomeArquivo = urlArquivo.substring(urlArquivo.lastIndexOf("/") + 1);
 
+            if (arquivosDesejados.contains(nomeArquivo)) {
+                System.out.println("Iniciando download do arquivo: " + nomeArquivo);
+                try {
+                    URL website = new URL(urlArquivo);
+                    HttpURLConnection connection = (HttpURLConnection) website.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+                    connection.setDoInput(true);
+                    connection.connect();
+
+                    if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        try (InputStream inputStream = connection.getInputStream();
+                             FileOutputStream outputStream = new FileOutputStream(caminhoDestino + nomeArquivo)) {
+
+                            byte[] buffer = new byte[8192];
+                            int bytesRead;
+                            long totalBytesRead = 0;
+
+                            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                outputStream.write(buffer, 0, bytesRead);
+                                totalBytesRead += bytesRead;
+                            }
+
+                            outputStream.flush();
+
+                            if (totalBytesRead > 0) {
+                                System.out.println("Download concluído com sucesso: " + nomeArquivo + " (Tamanho: " + totalBytesRead + " bytes)");
+                            } else {
+                                System.out.println("Download falhou: O arquivo está vazio.");
+                            }
+                        }
+                    } else {
+                        System.out.println("Erro ao baixar o arquivo: " + nomeArquivo + ". Código de resposta HTTP: " + connection.getResponseCode());
+                    }
+
+                    connection.disconnect();
+                } catch (IOException e) {
+                    System.err.println("Erro ao baixar o arquivo: " + e.getMessage());
+                }
+            } else {
+                System.out.println("Arquivo ignorado: " + nomeArquivo);
+            }
+        }
     }
 
-    public static void compactarArquivos(List<String> arquivos, String nomeArquivoZip) {
+    public static void compactarArquivos(String nomeArquivoZip) {
+        File diretorio = new File("TestesNivelamento/");
+        File[] arquivos = diretorio.listFiles((dir, name) -> name.endsWith(".pdf") && new File(dir, name).isFile());
+
+        if (arquivos == null || arquivos.length == 0) {
+            System.out.println("Nenhum arquivo PDF encontrado na pasta TestesNivelamento para compactar.");
+            return;
+        }
+
         try {
             FileOutputStream fos = new FileOutputStream(nomeArquivoZip);
             ZipOutputStream zipOut = new ZipOutputStream(fos);
 
-            for (String arquivo : arquivos) {
-                File fileToZip = new File(arquivo);
-                if (!fileToZip.exists()) {
-                    System.out.println("Arquivo não encontrado: " + arquivo);
-                    continue;
-                }
-                FileInputStream fis = new FileInputStream(fileToZip);
-                ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
-                zipOut.putNextEntry(zipEntry);
+            for (File fileToZip : arquivos) {
+                try (FileInputStream fis = new FileInputStream(fileToZip)) {
+                    ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
+                    zipOut.putNextEntry(zipEntry);
 
-                byte[] bytes = new byte[1024];
-                int length;
-                while ((length = fis.read(bytes)) >= 0) {
-                    zipOut.write(bytes, 0, length);
+                    byte[] bytes = new byte[1024];
+                    int length;
+                    while ((length = fis.read(bytes)) >= 0) {
+                        zipOut.write(bytes, 0, length);
+                    }
+
+                    System.out.println("Arquivo adicionado ao zip: " + fileToZip.getName());
                 }
-                fis.close();
             }
+
             zipOut.close();
             fos.close();
             System.out.println("Compactação concluída com sucesso: " + nomeArquivoZip);
