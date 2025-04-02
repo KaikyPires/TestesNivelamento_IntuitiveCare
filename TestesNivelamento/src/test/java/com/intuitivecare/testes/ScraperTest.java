@@ -25,11 +25,10 @@ public class ScraperTest {
 
     @After
     public void tearDown() {
-        // Limpar arquivos gerados após os testes
         File[] arquivos = new File(TEST_FOLDER).listFiles();
         if (arquivos != null) {
             for (File arquivo : arquivos) {
-                if (!arquivo.getName().equals("ArquivosCompactados.zip")) { // Não apagar o arquivo zip para validar o teste
+                if (!arquivo.getName().equals("ArquivosCompactados.zip")) { 
                     arquivo.delete();
                 }
             }
@@ -44,10 +43,9 @@ public class ScraperTest {
 
     @Test
     public void testBaixarArquivosDesejados() throws IOException {
-        // Realizar o scraping e baixar os arquivos desejados
+
         Scraper.baixarArquivos(Scraper.conectarUrl(URL));
 
-        // Verificar se os arquivos baixados existem e não estão vazios
         String[] arquivosEsperados = {
             "Anexo_I_Rol_2021RN_465.2021_RN627L.2024.pdf",
             "Anexo_II_DUT_2021_RN_465.2021_RN628.2025_RN629.2025.pdf"
@@ -62,13 +60,9 @@ public class ScraperTest {
 
     @Test
     public void testCompactarArquivos() throws IOException {
-        // Realizar o scraping e baixar os arquivos desejados
         Scraper.baixarArquivos(Scraper.conectarUrl(URL));
-
-        // Compactar os arquivos baixados
         Scraper.compactarArquivos(ZIP_FILE);
 
-        // Verificar se o arquivo ZIP foi gerado
         File arquivoZip = new File(ZIP_FILE);
         assertTrue("O arquivo ZIP não foi criado.", arquivoZip.exists());
         assertTrue("O arquivo ZIP está vazio.", arquivoZip.length() > 0);

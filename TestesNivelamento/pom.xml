@@ -36,6 +36,19 @@
     <version>4.13.2</version>
     <scope>test</scope>
 </dependency>
+<!-- Dependência para manipulação de PDFs -->
+<dependency>
+    <groupId>org.apache.pdfbox</groupId>
+    <artifactId>pdfbox</artifactId>
+    <version>2.0.29</version>
+</dependency>
+ <!-- Apache Commons CSV para manipulação CSV -->
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-csv</artifactId>
+        <version>1.10.0</version>
+    </dependency>
+
 
     </dependencies>
 
