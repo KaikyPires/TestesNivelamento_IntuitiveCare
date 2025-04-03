@@ -20,7 +20,7 @@ Além do projeto em Java, há um script Python em python_scripts/, que realiza:
 1. **Extração de dados** do PDF `Anexo_I_Rol_2021RN_465.2021_RN627L.2024.pdf` usando **pdfplumber**.  
 2. **Geração de um CSV** (codificado em UTF-8 BOM).  
 3. **Substituição** das abreviações `OD` e `AMB` conforme legenda.  
-4. **Compactação** do CSV em um ZIP (por exemplo, `Teste_seu_nome.zip`).
+4. **Compactação** do CSV em um ZIP **(Teste_Kaiky.zip dentro de TesteNivelamento)**.
 
 ---
 
