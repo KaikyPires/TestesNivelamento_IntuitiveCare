@@ -4,7 +4,7 @@ Este repositório contém as soluções para **Testes 1 e 2**:
 - **Teste 1**: Criação de um scraper em Java para baixar arquivos PDF (Anexo I e II) e compactar em ZIP.  
 - **Teste 2**: Extração de dados do Anexo I em Python, transformando em CSV e compactando em ZIP.
 
-## Teste: Web Scraping
+## Teste: Web Scraping (Java)
 
 - **Download de arquivos PDF específicos** (ex.: `Anexo_I` e `Anexo_II`).
 - **Compactação** dos arquivos baixados em um arquivo ZIP.
